@@ -12,5 +12,4 @@ urlpatterns = [
     path('movies', MovieView.as_view()),
     path('ratings', GetRatings.as_view()),
     path('rec', MovieRecommendation.as_view()),
-    
 ] 

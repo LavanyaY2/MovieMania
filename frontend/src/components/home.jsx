@@ -28,7 +28,6 @@ const client = axios.create({
 });
 
 // creating static variable
-//const API_URL = 'http://www.omdbapi.com?apikey=caecb60a';
 const API_URL = `${process.env.API_URL}`
 
 const customTheme = createTheme({

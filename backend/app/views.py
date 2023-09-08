@@ -1,35 +1,19 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from rest_framework.generics import ListCreateAPIView
-from rest_framework.generics import CreateAPIView
-from rest_framework import permissions, status
+from rest_framework import permissions
 from django.contrib import auth
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
-from django.utils.decorators import method_decorator
 from .serializers import UserSerializer
 from rest_framework.authentication import SessionAuthentication
-
 from django.db.models import Q
-from rest_framework.decorators import api_view
-
-# for recommendation model
 from .models import *
-from .serializers import MovieSerializer, RatingSerializer, MovieRecSerializer
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-# for item similarity
-from sklearn.metrics.pairwise import cosine_similarity
-import operator
+from .serializers import MovieSerializer, RatingSerializer
+import pickle
+from ML.ml_model import recommend_movies
 
-
-# the sign up view - csrf protected 
-#@method_decorator(csrf_protect, name='dispatch')
 class Register(APIView):
-    # set permission classes to allow any - doesn't need to have csrf protection
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, format=None):
@@ -52,7 +36,6 @@ class Register(APIView):
         else:
             return Response({'error': 'Passwords do not match'})
 
-#@method_decorator(ensure_csrf_cookie, name='dispatch')
 class Login(APIView):
     permission_classes = (permissions.AllowAny, )
     authentication_classes = (SessionAuthentication,)
@@ -71,7 +54,6 @@ class Login(APIView):
         else:
             return Response({'error': 'Failed to Log in'})
         
-# because we are already authenticated, we are already csrf protected here
 class Logout(APIView):
     permission_classes = (permissions.AllowAny, )
     authentication_classes = ()
@@ -83,7 +65,7 @@ class Logout(APIView):
         except:
             return Response({'error': 'Failed to Log out'})
         
-# view to get users
+# view to get all users
 class GetUsers(APIView):
     permission_classes = (permissions.AllowAny, )
     def get(self, request, format = None):
@@ -104,16 +86,12 @@ class CheckAuthenticatedView(APIView):
             return Response({'error': 'something went wrong'})
 
 
-# we need to get the csrf token in our react application
-#@method_decorator(ensure_csrf_cookie, name='dispatch')
 class GetCSRFToken(APIView):
     permission_classes = (permissions.AllowAny, )
     def get(self, request, format=None):
         return Response({'success': 'CSRF cookie set'})
     
 
-
-# the listcreateapi view helps us create get and post methods
 class RateMovies(ListCreateAPIView):
     permission_classes = (permissions.AllowAny, )
     #authentication_classes = (SessionAuthentication,)
@@ -124,7 +102,6 @@ class RateMovies(ListCreateAPIView):
 # gives us the list of movies and the ratings
 class MovieView(ListAPIView):
     permission_classes = (permissions.AllowAny, )
-    #queryset = Movie.objects.all()
 
     serializer_class = MovieSerializer
     def get_queryset(self):
@@ -142,57 +119,18 @@ class GetRatings(ListAPIView):
     serializer_class = RatingSerializer
 
 
-import pickle
-from ML.ml_model import recommend_movies
-
-
 class MovieRecommendation(APIView):
     permission_classes = (permissions.AllowAny, )
 
     def recommend_movies(self, request, format=None):
-        print(request.query_params)
         user_id = request.query_params.get('user_id')
         num_similar_items = 3
         num_of_recs = 3
-
-        print("TEST")
-        print(user_id)
-
         recommendation_model = pickle.load(open("ml_model.sav", "rb"))
         
-        print("LOADED MODEL")
-
         # Call the recommendation function
         movie_recs = recommendation_model(user_id, num_similar_items, num_of_recs)
-
-        print("recommended movies")
-        print(movie_recs)
         return Response({'recommended_movies': movie_recs})
     
     def get(self, request, format=None):
         return self.recommend_movies(request, format)
-
-# class MovieRecommendation(APIView):
-#     permission_classes = (permissions.AllowAny, )
-#     def get(self, request, format=None):
-#         user_id = request.user.id
-#         num_similar_items = 3
-#         num_of_recs = 3
-
-#         print("TEST")
-#         print(request.user.id)
-
-#         recommendation_model = pickle.load(open("ml_model.sav", "rb"))
-        
-#         print("LOADED MODEL")
-
-#         # Load the pickled recommendation model
-#         # with open('ml_model.sav', 'rb') as model_file:
-#         #     recommendation_model = pickle.load(model_file)
-
-#         # Call the recommendation function
-#         movie_recs = recommendation_model(user_id, num_similar_items, num_of_recs)
-
-#         print("recommended movies")
-#         print(movie_recs)
-#         return Response({'recommended_movies': movie_recs})

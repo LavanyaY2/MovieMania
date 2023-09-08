@@ -7,7 +7,6 @@ class RatingSerializer(serializers.ModelSerializer):
         model = Rating
         fields = '__all__'
 
-
 # now we can get the ratings of each user
 class UserSerializer(serializers.ModelSerializer):
 
@@ -17,12 +16,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class MovieSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Movie
-        fields = '__all__'
-
-class MovieRecSerializer(serializers.ModelSerializer):
-    users = UserSerializer(read_only=True, many=True, source="users_set")
     class Meta:
         model = Movie
         fields = '__all__'
